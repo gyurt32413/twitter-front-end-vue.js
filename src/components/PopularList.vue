@@ -1,6 +1,6 @@
 <template>
   <div class="popular-container">
-    <h1 class="popular-title">Popular</h1>
+    <h1 class="popular-title">跟隨誰</h1>
     <ul class="popular-list">
       <li
         @click="routerToUser(user.id)"
@@ -8,22 +8,28 @@
         :key="user.id"
         class="popular-item"
       >
-        <img class="popular-avatar" :src="user.avatar" alt="user-img" />
+        <img
+          class="popular-avatar"
+          :src="user.avatar ? user.avatar : avatarNone"
+          alt="user-img"
+        />
         <div class="popular-info">
           <router-link :to="`users/${user.id}`" class="popular-name">{{
-            user.userName
+            user.name
           }}</router-link>
-          <p class="popular-account">{{ user.userAccount }}</p>
+          <p class="popular-account">{{ user.account }}</p>
         </div>
         <button
           v-show="!user.isFollowed"
-          @click.stop.prevent="addFollow(user.id)"
+          :disabled="isProcessing"
+          @click.stop.prevent="addFollow(user)"
           class="btn-follow"
         >
           跟隨
         </button>
         <button
           v-show="user.isFollowed"
+          :disabled="isProcessing"
           @click.stop.prevent="removeFollow(user.id)"
           class="btn-follow btn-following"
         ></button>
@@ -33,99 +39,79 @@
 </template>
 
 <script>
-const dummyUsers = [
-  {
-    id: 1,
-    avatar: "https://i.pravatar.cc/100",
-    userName: "A",
-    userAccount: "@A",
-    isFollowed: true,
-  },
-  {
-    id: 2,
-    avatar: "https://i.pravatar.cc/100",
-    userName: "A",
-    userAccount: "@A",
-    isFollowed: false,
-  },
-  {
-    id: 3,
-    avatar: "https://i.pravatar.cc/100",
-    userName: "A",
-    userAccount: "@A",
-    isFollowed: false,
-  },
-  {
-    id: 4,
-    avatar: "https://i.pravatar.cc/100",
-    userName: "A",
-    userAccount: "@A",
-    isFollowed: false,
-  },
-  {
-    id: 5,
-    avatar: "https://i.pravatar.cc/100",
-    userName: "A",
-    userAccount: "@A",
-    isFollowed: false,
-  },
-  {
-    id: 6,
-    avatar: "https://i.pravatar.cc/100",
-    userName: "A",
-    userAccount: "@A",
-    isFollowed: false,
-  },
-  {
-    id: 7,
-    avatar: "https://i.pravatar.cc/100",
-    userName: "A",
-    userAccount: "@A",
-    isFollowed: false,
-  },
-  {
-    id: 8,
-    avatar: "https://i.pravatar.cc/100",
-    userName: "A",
-    userAccount: "@A",
-    isFollowed: false,
-  },
-  {
-    id: 9,
-    avatar: "https://i.pravatar.cc/100",
-    userName: "A",
-    userAccount: "@A",
-    isFollowed: false,
-  },
-  {
-    id: 10,
-    avatar: "https://i.pravatar.cc/100",
-    userName: "A",
-    userAccount: "@A",
-    isFollowed: false,
-  },
-];
+import usersAPI from "./../apis/users";
+import { Toast } from "./../utils/helpers";
+import avatarNone from "../assets/Avatar-none.png";
 
 export default {
   data() {
     return {
       users: [],
+      avatarNone,
+      isProcessing: false,
     };
   },
   created() {
     this.fetchPopularList();
   },
   methods: {
-    fetchPopularList() {
-      this.users = dummyUsers;
+    async fetchPopularList() {
+      try {
+        const response = await usersAPI.getTopFollowedUser();
+        // console.log('response', response)
+        const { data } = response;
+        this.users = data;
+      } catch (error) {
+        Toast.fire({
+          icon: "error",
+          title: "無法取得跟隨誰資料，請稍後再試",
+        });
+        console.log(error);
+      }
     },
-    addFollow(userID) {
-      const followUser = this.users.find((user) => user.id === userID);
-      followUser.isFollowed = true;
+    async addFollow(TopFollowedUser) {
+      try {
+        this.isProcessing = true;
+        const { data } = await usersAPI.addFollow(TopFollowedUser);
+        // console.log('data', data)
+        this.users = this.users.map((user) => {
+          if (user.id !== data.followship.followingId) {
+            return user;
+          } else {
+            return {
+              ...user,
+              isFollowed: true,
+            };
+          }
+        });
+        // console.log(this.users)
+        this.isProcessing = false;
+        window.location.reload();
+      } catch (error) {
+        this.isProcessing = false;
+        Toast.fire({
+          icon: "error",
+          title: "無法加入追蹤，請稍後再試",
+        });
+      }
     },
-    removeFollow(userID) {
-      const followUser = this.users.find((user) => user.id === userID);
+    async removeFollow(userId) {
+      this.isProcessing = true;
+      const followUser = this.users.find((user) => user.id === userId);
       followUser.isFollowed = false;
+      try {
+        const { data } = await usersAPI.removeFollow(userId);
+        console.log("data", data);
+        console.log(userId);
+        this.isProcessing = false;
+        window.location.reload();
+      } catch (error) {
+        this.isProcessing = false;
+        Toast.fire({
+          icon: "error",
+          title: "無法取消追蹤，請稍後再試",
+        });
+      }
     },
     routerToUser(userID) {
       this.$router.push(`/users/${userID}`);
@@ -137,15 +123,20 @@ export default {
 
 <style scoped>
 .popular-container {
-  width: 350px;
+  position: fixed;
+  top: 0;
+  z-index: 100;
+  width: 273px;
   border-radius: 14px;
   background-color: #f5f8fa;
+  border-top: 1px solid white;
+  /* border: 1px solid red; */
 }
 .popular-title {
-  line-height: 45px;
-  padding-left: 15px;
-  font-size: 18px;
+  margin: 24px 0 24px 24px;
   font-weight: 700;
+  font-size: 24px;
+  line-height: 26px;
 }
 .popular-item {
   position: relative;
@@ -153,7 +144,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   border-top: 1px solid #e6ecf0;
-  padding: 10px 15px;
+  padding: 16px;
 }
 .popular-item:hover {
   cursor: pointer;
@@ -164,6 +155,7 @@ export default {
   width: 50px;
   height: 50px;
   border-radius: 25px;
+  margin-right: 8px;
 }
 
 .popular-info {

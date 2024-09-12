@@ -1,38 +1,66 @@
 <template>
   <div class="wrapper-admin-user-card">
-    <img class="cover-image" src="https://i.imgur.com/Y20gp8R.png" alt="" />
-    <img class="avatar" src="https://i.imgur.com/sFuDF3M.png" alt="" />
+    <img
+      class="cover-image"
+      :src="user.cover ? user.cover : coverNone"
+      alt=""
+    />
+    <img class="avatar" :src="user.avatar ? user.avatar : avatarNone" alt="" />
     <div class="info">
       <div class="names">
-        <p class="user-name">John Doe</p>
-        <p class="user-account">@John Doe</p>
+        <p class="user-name">{{ user.name }}</p>
+        <p class="user-account">@{{ user.account }}</p>
       </div>
       <div class="counts">
         <img class="tweet-count" src="https://i.imgur.com/41M4NLK.png" alt="" />
-        <span>1.5k</span>
+        <span>{{ user.totalTweetNum }}</span>
         <img class="like-count" src="https://i.imgur.com/dQXJ6Mp.png" alt="" />
-        <span>20k</span>
+        <span>{{ user.totalLikeCount }}</span>
       </div>
       <div class="follow-ship">
-        <span>34 個</span><span>追隨中</span>
-        <span>59 位</span><span>追隨者</span>
+        <span>{{ user.followersNum }}個</span><span>追隨中</span>
+        <span>{{ user.followingsNum }}位</span><span>追隨者</span>
       </div>
     </div>
   </div>
 </template>
 
+<script>
+import avatarNone from "../assets/Avatar-none.png";
+import coverNone from "../assets/Cover-none.jpg";
+export default {
+  props: {
+    initialUser: {
+      type: Object,
+      required: true,
+    },
+  },
+  data() {
+    return {
+      user: this.initialUser,
+      avatarNone,
+      coverNone,
+    };
+  },
+};
+</script>
+
 <style scoped>
-.wrapper-admin-user-card {  
+.wrapper-admin-user-card {
   position: relative;
-  width: 245px;
+  width: 249px;
   height: 314px;
   border-radius: 10px;
+  margin: 0 0 16px 16px;
+  background-color: #f6f7f8;
 }
 .cover-image {
   display: block;
   width: 100%;
   height: 140px;
   object-fit: cover;
+  border-top-right-radius: 10px;
+  border-top-left-radius: 10px;
 }
 .avatar {
   display: block;
@@ -41,9 +69,11 @@
   position: absolute;
   top: 64px;
   left: 72px;
+  border: 4px solid #ffffff;
+  border-radius: 50px;
 }
-.info {  
-  margin-top: 32px;  
+.info {
+  margin-top: 32px;
   height: 118px;
   display: flex;
   flex-flow: column nowrap;
@@ -57,7 +87,7 @@
   color: #171725;
 }
 .user-account {
-  font-size: 14px;  
+  font-size: 14px;
   line-height: 22px;
   color: #6c757d;
 }

@@ -1,11 +1,7 @@
 <template>
   <div class="nav-container">
     <div class="logo">
-      <img
-        src="https://upload.cc/i1/2022/05/10/LycK2A.png"
-        alt="logo-img"
-        class="logo-img"
-      />
+      <img :src="acLogo" alt="logo-img" class="logo-img" />
     </div>
     <div class="navigation">
       <router-link
@@ -28,11 +24,7 @@
       </router-link>
 
       <div class="nav-item logo-out">
-        <img
-          src="https://upload.cc/i1/2022/05/12/NqlER9.png"
-          alt="setting-img"
-          class="nav-item-img"
-        />
+        <img :src="logoutImg" alt="setting-img" class="nav-item-img" />
         <span @click="logout" class="nav-item-title">登出</span>
       </div>
     </div>
@@ -40,10 +32,15 @@
 </template>
 
 <script>
+import acLogo from "../assets/AC-logo.png";
+import logoutImg from "../assets/icon_logout.png";
+
 export default {
   data() {
     return {
       currentPage: "",
+      acLogo,
+      logoutImg,
     };
   },
   created() {
@@ -52,6 +49,9 @@ export default {
   methods: {
     logout() {
       // 待串接API後取消token
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userAvatar");
       this.$router.push("/signin");
     },
   },
@@ -60,9 +60,11 @@ export default {
 
 <style scoped>
 .nav-container {
-  position: relative;
-  height: 100vh;
-  width: 235px;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 100;
+  width: 178px;
 }
 .logo-img {
   width: 30px;

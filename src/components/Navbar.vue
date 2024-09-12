@@ -1,11 +1,7 @@
 <template>
   <div class="nav-container">
     <div class="logo">
-      <img
-        src="https://upload.cc/i1/2022/05/10/LycK2A.png"
-        alt="logo-img"
-        class="logo-img"
-      />
+      <img :src="acLogo" alt="logo-img" class="logo-img" />
     </div>
     <div class="navigation">
       <router-link
@@ -16,7 +12,7 @@
         <span class="nav-item-title">首頁</span>
       </router-link>
       <router-link
-        to="/users/:id"
+        :to="{ name: 'user', params: { id: currentUserId } }"
         :class="['nav-item', { 'current-page': currentPage === 'user' }]"
       >
         <span class="nav-item-font icon-self-img"></span>
@@ -29,37 +25,53 @@
         <span class="nav-item-font icon-setting-img"></span>
         <span class="nav-item-title">設定</span>
       </router-link>
-      <div class="nav-item tweet">
-        <button class="btn-submit btn btn-lg btn-primary btn-block">
+      <div class="nav-item-tweet">
+        <button
+          class="btn-submit btn btn-lg btn-primary btn-block"
+          data-toggle="modal"
+          data-target="#tweetModal"
+          @click="toMain"
+        >
           推文
         </button>
       </div>
       <div class="nav-item logo-out">
-        <img
-          src="https://upload.cc/i1/2022/05/12/NqlER9.png"
-          alt="setting-img"
-          class="nav-item-img"
-        />
-        <span class="nav-item-title">登出</span>
+        <img :src="logoutImg" alt="setting-img" class="nav-item-img" />
+        <span @click="logout()" class="nav-item-title">登出</span>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import acLogo from "../assets/AC-logo.png";
+import logoutImg from "../assets/icon_logout.png";
+
 export default {
   data() {
     return {
       currentPage: "",
+      currentUserId: -1,
+      acLogo,
+      logoutImg,
     };
   },
   created() {
     this.currentPage = this.$route.name;
+    this.currentUserId = localStorage.getItem("userId");
   },
   methods: {
     logout() {
       // 待串接API後取消token
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userAvatar");
       this.$router.push("/signin");
+    },
+    toMain() {
+      if (this.$route.path !== "/main") {
+        this.$router.push("/main");
+      }
     },
   },
 };
@@ -67,23 +79,23 @@ export default {
 
 <style scoped>
 .nav-container {
-  width: 235px;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 100;
+  width: 178px;
 }
 .logo-img {
-  width: 30px;
-  margin-top: 4px;
-  margin-left: 10px;
-}
-.navigation {
-  margin-top: 45px;
+  width: 50px;
+  height: 50px;
+  margin: 8px 0 0 8px;
 }
 .nav-item {
-  display: inline-block;
+  display: block;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 8px;
   border-radius: 20px;
-  padding: 10px;
-  padding-right: 30px;
+  padding: 16px 0 16px 16px;
   color: #1c1c1c;
 }
 .nav-item:hover {
@@ -102,7 +114,7 @@ export default {
   position: relative;
   top: 2px;
   font-size: 20px;
-  margin-right: 20px;
+  margin-right: 16px;
 }
 .nav-item-img {
   position: relative;
@@ -121,14 +133,16 @@ export default {
 }
 
 .btn-submit {
-  width: 210px;
-  height: 38px;
+  width: 178px;
+  height: 46px;
   background-color: #ff6600;
   border: none;
   border-radius: 50px;
   color: white;
-  font-size: 16px;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 30px;
+  /* box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); */
 }
 
 /* 當前頁面顏色變化 */
