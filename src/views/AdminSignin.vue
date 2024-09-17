@@ -1,12 +1,7 @@
 <template>
   <div class="container">
     <div class="logo">
-      <img
-        class="logo-img"
-        src="https://upload.cc/i1/2022/05/10/LycK2A.png
-"
-        alt="AC-logo"
-      />
+      <img class="logo-img" :src="acLogo" alt="AC-logo" />
     </div>
     <h1>後台登入</h1>
     <form class="w-100" @submit.prevent.stop="handleSubmit">
@@ -37,7 +32,11 @@
         />
       </div>
 
-      <button class="btn btn-lg btn-primary btn-block mb-3" type="submit">
+      <button
+        class="btn btn-lg btn-primary btn-block mb-3"
+        type="submit"
+        :disabled="isProcessing"
+      >
         登入
       </button>
 
@@ -51,6 +50,10 @@
 </template>
 
 <script>
+import authorization from "../apis/authorization";
+import { Toast } from "../utils/helpers";
+import acLogo from "../assets/AC-logo.png";
+
 export default {
   data() {
     return {
@@ -58,20 +61,59 @@ export default {
       adminPassword: "",
       isProcessing: false,
       isWronging: false,
+      acLogo,
     };
   },
   methods: {
-    handleSubmit() {
-      const data = JSON.stringify({
-        adminAccount: this.adminAccount,
-        adminPassword: this.adminPassword,
-      });
+    async handleSubmit() {
+      try {
+        this.isProcessing = true;
+        if (!this.adminAccount || !this.adminPassword) {
+          Toast.fire({
+            icon: "warning",
+            title: "請填入帳號和密碼",
+          });
+          return;
+        }
 
-      // TODO: 向後端驗證使用者登入資訊是否合法
-      console.log("data", data);
-      // 成功登入後轉址到餐聽首頁
-      this.$router.push("/admin/main");
+        this.isProcessing = true;
+
+        const response = await authorization.AdminSignin({
+          account: this.adminAccount,
+          password: this.adminPassword,
+        });
+        console.log("response", response);
+        const { data, statusText } = response;
+
+        if (statusText !== "OK" || data.status !== "success") {
+          throw new Error(statusText);
+        }
+
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("userId", data.data.user.id);
+        localStorage.setItem("userAvatar", data.data.user.avatar);
+
+        // 將資料傳到Vuex中
+        // this.$store.commit('setCurrentUser', data.user)
+
+        this.$router.push("/admin/tweets");
+      } catch (error) {
+        this.adminPassword = "";
+        console.log(error);
+        this.isProcessing = false;
+
+        Toast.fire({
+          icon: "warning",
+          title: "請確認您輸入了正確的帳號密碼",
+        });
+      }
     },
+
+    //   // TODO: 向後端驗證使用者登入資訊是否合法
+    //   console.log("data", data);
+    //   // 成功登入後轉址到餐聽首頁
+    //   this.$router.push("/admin/main");
+    // },
   },
 };
 </script>
